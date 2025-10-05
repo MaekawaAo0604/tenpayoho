@@ -1,22 +1,29 @@
 name: Generate & Publish Forecast
+
 on:
   schedule:
-    - cron: "30 22 * * *" # JST 7:30（GitHubはUTC）
+    - cron: "30 22 * * *"         # JST 7:30（GitHubはUTC）
   workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: forecast-publish
+  cancel-in-progress: true
+
 jobs:
   run:
     runs-on: ubuntu-latest
+    env:
+      TZ: Asia/Tokyo              # 出力日付をJSTで固定
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: "npm"
+          cache: npm
 
       # node-canvas のビルドに必要
       - name: Install system deps for canvas
@@ -25,11 +32,17 @@ jobs:
           sudo apt-get install -y \
             libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
 
-      # 依存インストール & 生成
+      # 日本語フォント（Noto Sans CJK）を入れて豆腐文字を回避
+      - name: Install Japanese font
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-noto-cjk
+
+      # 依存インストール & 画像生成
       - name: Install deps & build image
         run: |
           npm ci || npm i
-          node src/index.js   # => out/tenpa-map-YYYYMMDD.png を出力する想定
+          node src/index.js        # => out/tenpa-map-YYYYMMDD.png を出力する想定
 
       # 生成物の確認（ログで場所を可視化）
       - name: List outputs
@@ -46,12 +59,12 @@ jobs:
           set -e
           FILE=$(ls -t out/*.png 2>/dev/null | head -n1 || true)
           if [ -z "$FILE" ]; then
-            echo "❌ PNGが生成されていません。src/index.js の出力先を確認してください。"
+            echo "❌ PNGが生成されていません。src/index.js の出力先/ファイル名を確認してください。"
             exit 1
           fi
           DATE=$(basename "$FILE" | sed -E 's/[^0-9]//g' | cut -c1-8)
           if [ -z "$DATE" ]; then
-            DATE=$(date -u +'%Y%m%d')
+            DATE=$(date +'%Y%m%d')   # JST（TZで固定）
           fi
           echo "file=$FILE" >> $GITHUB_OUTPUT
           echo "date=$DATE" >> $GITHUB_OUTPUT
@@ -68,18 +81,22 @@ jobs:
           git fetch origin gh-pages || true
           git switch gh-pages || git switch -c gh-pages
 
-          # Jekyll無効化（1回置いておくと安心）
+          # Jekyll無効化 & PNGをバイナリ扱い（初回だけ作成）
           [ -f .nojekyll ] || touch .nojekyll
+          if [ ! -f .gitattributes ]; then
+            echo "*.png binary" > .gitattributes
+          fi
 
           mkdir -p forecast
           cp "$FILE" "forecast/${DATE}.png"
           cp "$FILE" "forecast/latest.png"
 
           # PNGヘッダの簡易チェック（‰PNG\r\n\032\n）
+          echo "PNG header:"
           xxd -l 8 "forecast/latest.png"
 
           git config user.name  "tenpa-bot"
           git config user.email "bot@tenpa.org"
-          git add .nojekyll forecast/*
+          git add .nojekyll .gitattributes forecast/*
           git commit -m "forecast: ${DATE}" || echo "No changes"
           git push origin gh-pages
