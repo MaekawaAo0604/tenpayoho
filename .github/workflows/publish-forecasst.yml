@@ -1,0 +1,42 @@
+name: Generate & Publish Forecast
+on:
+  schedule:
+    - cron: "30 22 * * *" # JST 7:30（GitHubはUTC）
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # ▼ あなたの生成コマンドに合わせて調整
+      - run: npm ci || npm i
+      - run: node src/index.js # out/tenpa-map-YYYYMMDD.png を出力する想定
+
+      - name: Publish to gh-pages
+        run: |
+          set -e
+          FILE=$(ls out/tenpa-map-*.png | tail -n1)
+          DATE=$(basename "$FILE" | sed -E 's/[^0-9]//g' | cut -c1-8)
+
+          # gh-pages ブランチへ切替（初回は作成）
+          git fetch origin gh-pages || true
+          git switch gh-pages || git switch -c gh-pages
+
+          mkdir -p forecast
+          cp "$FILE" "forecast/${DATE}.png"
+          cp "$FILE" "forecast/latest.png"   # 常に上書き
+
+          git config user.name  "tenpa-bot"
+          git config user.email "bot@tenpa.org"
+          git add forecast/*
+          git commit -m "forecast: ${DATE}" || echo "No changes"
+          git push origin gh-pages
