@@ -16,27 +16,70 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: "npm"
 
-      # ▼ あなたの生成コマンドに合わせて調整
-      - run: npm ci || npm i
-      - run: node src/index.js # out/tenpa-map-YYYYMMDD.png を出力する想定
+      # node-canvas のビルドに必要
+      - name: Install system deps for canvas
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
 
+      # 依存インストール & 生成
+      - name: Install deps & build image
+        run: |
+          npm ci || npm i
+          node src/index.js   # => out/tenpa-map-YYYYMMDD.png を出力する想定
+
+      # 生成物の確認（ログで場所を可視化）
+      - name: List outputs
+        run: |
+          echo "=== find ./out PNGs ==="
+          find out -type f -name "*.png" -print || true
+          echo "=== tree out ==="
+          command -v tree && tree -a out || ls -R out || true
+
+      # 出力PNGを特定（無い場合は明示エラー）
+      - name: Pick latest png
+        id: pick
+        run: |
+          set -e
+          FILE=$(ls -t out/*.png 2>/dev/null | head -n1 || true)
+          if [ -z "$FILE" ]; then
+            echo "❌ PNGが生成されていません。src/index.js の出力先を確認してください。"
+            exit 1
+          fi
+          DATE=$(basename "$FILE" | sed -E 's/[^0-9]//g' | cut -c1-8)
+          if [ -z "$DATE" ]; then
+            DATE=$(date -u +'%Y%m%d')
+          fi
+          echo "file=$FILE" >> $GITHUB_OUTPUT
+          echo "date=$DATE" >> $GITHUB_OUTPUT
+          echo "Picked $FILE (DATE=$DATE)"
+
+      # gh-pages へ公開
       - name: Publish to gh-pages
         run: |
           set -e
-          FILE=$(ls out/tenpa-map-*.png | tail -n1)
-          DATE=$(basename "$FILE" | sed -E 's/[^0-9]//g' | cut -c1-8)
+          FILE="${{ steps.pick.outputs.file }}"
+          DATE="${{ steps.pick.outputs.date }}"
 
-          # gh-pages ブランチへ切替（初回は作成）
+          # gh-pages ブランチ（初回は作成）
           git fetch origin gh-pages || true
           git switch gh-pages || git switch -c gh-pages
 
+          # Jekyll無効化（1回置いておくと安心）
+          [ -f .nojekyll ] || touch .nojekyll
+
           mkdir -p forecast
           cp "$FILE" "forecast/${DATE}.png"
-          cp "$FILE" "forecast/latest.png"   # 常に上書き
+          cp "$FILE" "forecast/latest.png"
+
+          # PNGヘッダの簡易チェック（‰PNG\r\n\032\n）
+          xxd -l 8 "forecast/latest.png"
 
           git config user.name  "tenpa-bot"
           git config user.email "bot@tenpa.org"
-          git add forecast/*
+          git add .nojekyll forecast/*
           git commit -m "forecast: ${DATE}" || echo "No changes"
           git push origin gh-pages
