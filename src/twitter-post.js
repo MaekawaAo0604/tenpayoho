@@ -32,14 +32,35 @@ export async function postToTwitter(imagePath, tweetText, credentials) {
     await page.goto("https://twitter.com/i/flow/login", {
       waitUntil: "domcontentloaded",
     });
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(3000);
 
-    // メールアドレス/電話番号入力
-    const emailInput = page.locator('input[autocomplete="username"]');
-    await emailInput.waitFor({ state: "visible", timeout: 10000 });
+    // デバッグ用スクリーンショット
+    await page.screenshot({ path: "./out/debug-login-page.png" });
+    console.log("ログインページのスクリーンショットを保存: ./out/debug-login-page.png");
+
+    // メールアドレス/電話番号入力（複数のセレクタを試行）
+    let emailInput;
+    try {
+      emailInput = page.locator('input[autocomplete="username"]');
+      await emailInput.waitFor({ state: "visible", timeout: 5000 });
+    } catch {
+      console.log("セレクタ1失敗、代替セレクタを試行...");
+      try {
+        emailInput = page.locator('input[name="text"]');
+        await emailInput.waitFor({ state: "visible", timeout: 5000 });
+      } catch {
+        console.log("セレクタ2失敗、最終セレクタを試行...");
+        emailInput = page.locator('input[type="text"]').first();
+        await emailInput.waitFor({ state: "visible", timeout: 5000 });
+      }
+    }
+
     await emailInput.fill(credentials.email);
+    await page.waitForTimeout(1000);
+    await page.screenshot({ path: "./out/debug-after-email.png" });
+
     await page.keyboard.press("Enter");
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(3000);
 
     // ユーザー名入力（要求された場合）
     try {

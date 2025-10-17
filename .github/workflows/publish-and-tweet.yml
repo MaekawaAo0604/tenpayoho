@@ -52,6 +52,15 @@ jobs:
           TWITTER_PASSWORD: ${{ secrets.TWITTER_PASSWORD }}
         run: node scripts/post-to-twitter.js
 
+      # デバッグ用スクリーンショットをアップロード（エラー時の調査用）
+      - name: Upload debug screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-screenshots
+          path: out/debug-*.png
+          if-no-files-found: ignore
+
       # gh-pages へ公開（既存処理）
       - name: Publish to gh-pages
         run: |
