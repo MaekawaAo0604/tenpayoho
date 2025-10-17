@@ -2,10 +2,21 @@
 // ただし互換のため一旦残してもOK。
 // import fetch from "node-fetch";
 import dayjs from "dayjs";
-import { createCanvas, loadImage } from "canvas";
+import { createCanvas, loadImage, registerFont } from "canvas";
 import fs from "node:fs";
 import fsp from "node:fs/promises";
 import path from "node:path";
+
+// 日本語フォント登録（GitHub Actions Ubuntu環境用）
+try {
+  // Noto Sans CJK JP（Ubuntu標準）
+  registerFont("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc", {
+    family: "Noto Sans CJK JP",
+  });
+} catch {
+  // フォント登録失敗時はデフォルトフォントを使用（文字化けする可能性あり）
+  console.warn("日本語フォントの登録に失敗しました。デフォルトフォントを使用します。");
+}
 
 /**
  * anchors の (x,y) は、assets/japan_map_base.png の実ピクセル座標を使用
@@ -194,7 +205,7 @@ async function main() {
 
   // タイトル
   ctx.fillStyle = "#0F172A";
-  ctx.font = "bold 28px sans-serif";
+  ctx.font = 'bold 28px "Noto Sans CJK JP", sans-serif';
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
   ctx.fillText(`点パ天気予報 ${dayjs().format("YYYY/MM/DD")}`, 16, 28);
@@ -240,12 +251,12 @@ async function main() {
     ctx.textAlign = "center";
     ctx.textBaseline = "bottom";
     ctx.fillStyle = "#111827";
-    ctx.font = "bold 20px sans-serif";
+    ctx.font = 'bold 20px "Noto Sans CJK JP", sans-serif';
     ctx.fillText(r.name, x, y - ICON * 0.98 - 6);
 
     // ラベル帯
     const label = `天パ指数：${r.band.label}（${r.score}）`;
-    ctx.font = "bold 22px sans-serif";
+    ctx.font = 'bold 22px "Noto Sans CJK JP", sans-serif';
     const padX = 12,
       bh = 38;
     const tw = ctx.measureText(label).width;
@@ -263,7 +274,7 @@ async function main() {
     ctx.fillText(label, x, by + bh / 2);
 
     // 補足
-    ctx.font = "bold 14px sans-serif";
+    ctx.font = 'bold 14px "Noto Sans CJK JP", sans-serif';
     ctx.fillStyle = "#374151";
     ctx.fillText(`湿${r.hum}% 露${r.dew}°C 降${r.pop}%`, x, by + bh + 14);
   }
