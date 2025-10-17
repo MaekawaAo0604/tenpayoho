@@ -15,10 +15,15 @@ async function main() {
     `tenpa-map-${dayjs().format("YYYYMMDD")}.png`
   );
 
-  const tweetText = `今日の天パ予報です🌤️
-本日 ${dayjs().format("M月D日")} の天パ指数マップをお届けします!
+  const tweetText = `おはようございます☀️
+【${dayjs().format("M/D(ddd)")}の天パ予報】
 
-#天パ予報 #天気予報 #くせ毛`;
+全国主要6都市の天パ指数マップをチェック!
+札幌・仙台・東京・名古屋・大阪・福岡🗾
+
+外出前に確認してね👀
+
+#天パ予報 #日本天パ協会 #くせ毛 #天気予報 #ヘアケア`;
 
   const credentials = {
     email: process.env.TWITTER_EMAIL,
