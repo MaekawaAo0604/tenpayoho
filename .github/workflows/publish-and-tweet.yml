@@ -1,0 +1,75 @@
+name: Generate & Tweet Forecast
+on:
+  schedule:
+    - cron: "30 22 * * *" # JST 7:30（GitHubはUTC）
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      # node-canvas のビルドに必要
+      - name: Install system deps for canvas
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
+
+      # 依存インストール
+      - name: Install dependencies
+        run: npm ci || npm i
+
+      # Playwrightブラウザインストール
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      # 画像生成
+      - name: Generate forecast image
+        run: node src/index.js
+
+      # 生成物の確認
+      - name: List outputs
+        run: |
+          echo "=== Generated files ==="
+          find out -type f -name "*.png" -print || true
+          ls -lh out/ || true
+
+      # Twitter投稿
+      - name: Post to Twitter
+        env:
+          TWITTER_EMAIL: ${{ secrets.TWITTER_EMAIL }}
+          TWITTER_USERNAME: ${{ secrets.TWITTER_USERNAME }}
+          TWITTER_PASSWORD: ${{ secrets.TWITTER_PASSWORD }}
+        run: node scripts/post-to-twitter.js
+
+      # gh-pages へ公開（既存処理）
+      - name: Publish to gh-pages
+        run: |
+          set -e
+          FILE=$(ls -t out/*.png 2>/dev/null | head -n1)
+          DATE=$(basename "$FILE" | sed -E 's/[^0-9]//g' | cut -c1-8)
+
+          git fetch origin gh-pages || true
+          git switch gh-pages || git switch -c gh-pages
+
+          [ -f .nojekyll ] || touch .nojekyll
+
+          mkdir -p forecast
+          cp "$FILE" "forecast/${DATE}.png"
+          cp "$FILE" "forecast/latest.png"
+
+          git config user.name  "tenpa-bot"
+          git config user.email "bot@tenpa.org"
+          git add .nojekyll forecast/*
+          git commit -m "forecast: ${DATE}" || echo "No changes"
+          git push origin gh-pages
