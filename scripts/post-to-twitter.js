@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 import dayjs from "dayjs";
 import path from "node:path";
-import { postToTwitter } from "../src/twitter-post.js";
+import { postToTwitterAPI } from "../src/twitter-api-post.js";
 
 dotenv.config();
 
@@ -26,16 +26,17 @@ async function main() {
 #天パ予報 #日本天パ協会 #くせ毛 #天気予報 #ヘアケア`;
 
   const credentials = {
-    email: process.env.TWITTER_EMAIL,
-    username: process.env.TWITTER_USERNAME,
-    password: process.env.TWITTER_PASSWORD,
+    apiKey: process.env.TWITTER_API_KEY,
+    apiSecret: process.env.TWITTER_API_SECRET,
+    accessToken: process.env.TWITTER_ACCESS_TOKEN,
+    accessSecret: process.env.TWITTER_ACCESS_SECRET,
   };
 
-  if (!credentials.email || !credentials.username || !credentials.password) {
-    throw new Error("Twitter認証情報が設定されていません。環境変数を確認してください。");
+  if (!credentials.apiKey || !credentials.apiSecret || !credentials.accessToken || !credentials.accessSecret) {
+    throw new Error("Twitter API認証情報が設定されていません。環境変数を確認してください。");
   }
 
-  await postToTwitter(imagePath, tweetText, credentials);
+  await postToTwitterAPI(imagePath, tweetText, credentials);
   console.log("✅ Twitter投稿完了");
 }
 

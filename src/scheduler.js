@@ -4,7 +4,7 @@ import { exec } from "node:child_process";
 import { promisify } from "node:util";
 import path from "node:path";
 import dayjs from "dayjs";
-import { postToTwitter } from "./twitter-post.js";
+import { postToTwitterAPI } from "./twitter-api-post.js";
 
 dotenv.config();
 
@@ -44,11 +44,12 @@ async function generateAndPost() {
     // 画像生成
     const imagePath = await generateTenpaMap();
 
-    // Twitter認証情報
+    // Twitter API認証情報
     const credentials = {
-      email: process.env.TWITTER_EMAIL,
-      username: process.env.TWITTER_USERNAME,
-      password: process.env.TWITTER_PASSWORD,
+      apiKey: process.env.TWITTER_API_KEY,
+      apiSecret: process.env.TWITTER_API_SECRET,
+      accessToken: process.env.TWITTER_ACCESS_TOKEN,
+      accessSecret: process.env.TWITTER_ACCESS_SECRET,
     };
 
     // 投稿テキスト
@@ -64,7 +65,7 @@ async function generateAndPost() {
 
     // Twitter投稿
     console.log(`[${dayjs().format()}] Twitter投稿開始...`);
-    await postToTwitter(imagePath, tweetText, credentials);
+    await postToTwitterAPI(imagePath, tweetText, credentials);
     console.log(`[${dayjs().format()}] Twitter投稿完了!`);
   } catch (error) {
     console.error(`[${dayjs().format()}] エラー発生:`, error);

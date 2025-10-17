@@ -18,15 +18,19 @@
 npm install
 ```
 
-### 2. Playwrightブラウザのインストール
+### 2. Twitter API の取得
 
-```bash
-npx playwright install chromium
-```
+**[TWITTER_API_SETUP.md](TWITTER_API_SETUP.md) を参照してください**
+
+1. Twitter Developer Portal でアプリ作成
+2. API Key, API Secret, Access Token, Access Secret を取得
+3. App permissions を **Read and Write** に設定
+
+詳しい手順は [TWITTER_API_SETUP.md](TWITTER_API_SETUP.md) に記載しています。
 
 ### 3. 環境変数の設定
 
-`.env.example` をコピーして `.env` を作成し、Twitter認証情報を設定します。
+`.env.example` をコピーして `.env` を作成し、Twitter API認証情報を設定します。
 
 ```bash
 cp .env.example .env
@@ -35,10 +39,11 @@ cp .env.example .env
 `.env` ファイルを編集:
 
 ```env
-# Twitter認証情報
-TWITTER_EMAIL=your-email@example.com
-TWITTER_USERNAME=your_twitter_username
-TWITTER_PASSWORD=your_twitter_password
+# Twitter API認証情報
+TWITTER_API_KEY=your_api_key_here
+TWITTER_API_SECRET=your_api_secret_here
+TWITTER_ACCESS_TOKEN=your_access_token_here
+TWITTER_ACCESS_SECRET=your_access_secret_here
 
 # スケジュール設定（cron形式）
 SCHEDULE_TIME=0 8 * * *
@@ -120,13 +125,14 @@ tenpa-map/
 ### セキュリティ
 
 - `.env` ファイルは絶対にGitにコミットしないでください
-- Twitter認証情報は厳重に管理してください
-- 本番環境では `headless: true` に設定することを推奨
+- Twitter API認証情報は厳重に管理してください
+- GitHub Secretsに登録する際は、絶対に公開しないよう注意
 
-### Twitter認証
+### Twitter API
 
-- 2段階認証を有効にしている場合、アプリパスワードの利用が必要な場合があります
-- Twitterのログインフローは変更される可能性があるため、動作しない場合はセレクタの調整が必要です
+- Twitter API v2を使用（無料プランで月1,500ツイートまで）
+- 1日1回の投稿なら無料プランで十分
+- より高頻度の投稿が必要な場合はElevated Access（無料・審査あり）を推奨
 
 ### 実行環境
 
@@ -156,17 +162,17 @@ pm2 stop tenpa-bot
 
 ## トラブルシューティング
 
-### Playwrightがブラウザを起動できない
+### Twitter API エラー（403 Forbidden）
 
-```bash
-npx playwright install chromium --with-deps
-```
+1. Developer Portal で App permissions が **Read and Write** か確認
+2. Access Token を再生成
+3. GitHub Secrets を更新
 
-### Twitter投稿が失敗する
+### Twitter API エラー（401 Unauthorized）
 
-1. `.env` の認証情報を確認
-2. `src/twitter-post.js` の `headless: false` でブラウザの動作を目視確認
-3. エラー時のスクリーンショット `out/twitter-error.png` を確認
+1. API Key/Secret と Access Token/Secret が正しいか確認
+2. 必要に応じて再生成
+3. GitHub Secrets を更新
 
 ### 画像が生成されない
 

@@ -17,30 +17,39 @@
 
 ## 🌐 GitHub Actionsでの設定
 
-### 1. リポジトリSecretsの設定
+### 1. Twitter API の取得
+
+**[TWITTER_API_SETUP.md](TWITTER_API_SETUP.md) を参照してください**
+
+1. Twitter Developer Portal でアプリ作成
+2. API Key, API Secret, Access Token, Access Secret を取得
+3. App permissions を **Read and Write** に設定
+
+### 2. リポジトリSecretsの設定
 
 GitHubリポジトリの **Settings > Secrets and variables > Actions** で以下を登録:
 
-```
-TWITTER_EMAIL=your-email@example.com
-TWITTER_USERNAME=your_twitter_username
-TWITTER_PASSWORD=your_twitter_password
-```
+| Secret名 | 値 |
+|---------|-----|
+| `TWITTER_API_KEY` | API Key (Consumer Key) |
+| `TWITTER_API_SECRET` | API Secret (Consumer Secret) |
+| `TWITTER_ACCESS_TOKEN` | Access Token |
+| `TWITTER_ACCESS_SECRET` | Access Secret |
 
-### 2. GitHub Pagesの有効化
+### 3. GitHub Pagesの有効化
 
 **Settings > Pages** で:
 - Source: Deploy from a branch
 - Branch: `gh-pages` / `root`
 - Save
 
-### 3. ワークフローの有効化
+### 4. ワークフローの有効化
 
 `.github/workflows/publish-and-tweet.yml` が自動実行されます:
 - 毎日JST 7:30に画像生成 → Twitter投稿 → GitHub Pages公開
 - 手動実行: **Actions** タブから `workflow_dispatch`
 
-### 4. 動作確認
+### 5. 動作確認
 
 1. **Actions** タブで実行ログを確認
 2. Twitter投稿を確認
@@ -54,7 +63,6 @@ TWITTER_PASSWORD=your_twitter_password
 
 ```bash
 npm install
-npx playwright install chromium --with-deps
 ```
 
 ### 2. 環境変数の設定
@@ -66,9 +74,10 @@ cp .env.example .env
 `.env` を編集:
 
 ```env
-TWITTER_EMAIL=your-email@example.com
-TWITTER_USERNAME=your_twitter_username
-TWITTER_PASSWORD=your_twitter_password
+TWITTER_API_KEY=your_api_key_here
+TWITTER_API_SECRET=your_api_secret_here
+TWITTER_ACCESS_TOKEN=your_access_token_here
+TWITTER_ACCESS_SECRET=your_access_secret_here
 SCHEDULE_TIME=0 8 * * *
 RUN_IMMEDIATELY=false
 ```
@@ -138,21 +147,25 @@ sudo systemctl status tenpa-bot
 
 ## トラブルシューティング
 
-### GitHub Actions: Twitter投稿失敗
+### GitHub Actions: Twitter投稿失敗（403 Forbidden）
 
-**原因**: Playwrightがヘッドレスモードで動作できない
+**原因**: App permissions が Read only になっている
 
 **対処法**:
-1. Secretsの認証情報を再確認
-2. Twitterのログインフローが変わった可能性 → セレクタを修正
-3. ログで `out/twitter-error.png` を確認
+1. Developer Portal → アプリの Settings
+2. **User authentication settings** → Edit
+3. **App permissions** を **Read and Write** に変更
+4. Access Token を再生成
+5. GitHub Secrets を更新
 
-### ローカル: ブラウザが起動しない
+### Twitter API エラー（401 Unauthorized）
 
-```bash
-# 依存関係を再インストール
-npx playwright install chromium --with-deps
-```
+**原因**: API Key/Secret または Access Token/Secret が間違っている
+
+**対処法**:
+1. Developer Portal でキーを再確認
+2. 必要に応じて再生成
+3. GitHub Secrets/ローカル .env を更新
 
 ### 画像が生成されない
 
