@@ -4,9 +4,18 @@ import { exec } from "node:child_process";
 import { promisify } from "node:util";
 import path from "node:path";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc.js";
+import timezone from "dayjs/plugin/timezone.js";
 import { postToTwitterAPI } from "./twitter-api-post.js";
 
 dotenv.config();
+
+// dayjsのタイムゾーンプラグインを有効化
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+// 日本時間を取得するヘルパー関数
+const now = () => dayjs().tz("Asia/Tokyo");
 
 const execAsync = promisify(exec);
 
@@ -14,7 +23,7 @@ const execAsync = promisify(exec);
  * 天パ地図を生成して画像パスを返す
  */
 async function generateTenpaMap() {
-  console.log(`[${dayjs().format()}] 天パ地図生成開始...`);
+  console.log(`[${now().format()}] 天パ地図生成開始...`);
 
   try {
     const { stdout, stderr } = await execAsync("node src/index.js");
@@ -25,10 +34,10 @@ async function generateTenpaMap() {
     const imagePath = path.join(
       process.cwd(),
       "out",
-      `tenpa-map-${dayjs().format("YYYYMMDD")}.png`
+      `tenpa-map-${now().format("YYYYMMDD")}.png`
     );
 
-    console.log(`[${dayjs().format()}] 画像生成完了: ${imagePath}`);
+    console.log(`[${now().format()}] 画像生成完了: ${imagePath}`);
     return imagePath;
   } catch (error) {
     console.error("天パ地図生成エラー:", error);
@@ -54,7 +63,7 @@ async function generateAndPost() {
 
     // 投稿テキスト
     const tweetText = `おはようございます☀️
-【${dayjs().format("M/D(ddd)")}の天パ予報】
+【${now().format("M/D(ddd)")}の天パ予報】
 
 全国主要6都市の天パ指数マップをチェック!
 札幌・仙台・東京・名古屋・大阪・福岡🗾
@@ -64,11 +73,11 @@ async function generateAndPost() {
 #天パ予報 #日本天パ協会 #くせ毛 #天気予報 #ヘアケア`;
 
     // Twitter投稿
-    console.log(`[${dayjs().format()}] Twitter投稿開始...`);
+    console.log(`[${now().format()}] Twitter投稿開始...`);
     await postToTwitterAPI(imagePath, tweetText, credentials);
-    console.log(`[${dayjs().format()}] Twitter投稿完了!`);
+    console.log(`[${now().format()}] Twitter投稿完了!`);
   } catch (error) {
-    console.error(`[${dayjs().format()}] エラー発生:`, error);
+    console.error(`[${now().format()}] エラー発生:`, error);
   }
 }
 
@@ -86,7 +95,7 @@ function startScheduler() {
     scheduleTime,
     () => {
       console.log(`\n${"=".repeat(60)}`);
-      console.log(`[${dayjs().format()}] スケジュール実行`);
+      console.log(`[${now().format()}] スケジュール実行`);
       console.log(`${"=".repeat(60)}\n`);
       generateAndPost();
     },

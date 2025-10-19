@@ -2,10 +2,19 @@
 // ただし互換のため一旦残してもOK。
 // import fetch from "node-fetch";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc.js";
+import timezone from "dayjs/plugin/timezone.js";
 import { createCanvas, loadImage, registerFont } from "canvas";
 import fs from "node:fs";
 import fsp from "node:fs/promises";
 import path from "node:path";
+
+// dayjsのタイムゾーンプラグインを有効化
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+// 日本時間を取得するヘルパー関数
+const now = () => dayjs().tz("Asia/Tokyo");
 
 // 日本語フォント登録（GitHub Actions Ubuntu環境用）
 try {
@@ -208,7 +217,7 @@ async function main() {
   ctx.font = 'bold 28px "Noto Sans CJK JP", sans-serif';
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
-  ctx.fillText(`点パ天気予報 ${dayjs().format("YYYY/MM/DD")}`, 16, 28);
+  ctx.fillText(`点パ天気予報 ${now().format("YYYY/MM/DD")}`, 16, 28);
 
   // マスコット読み込み（失敗時は代替丸）
   const iconPaths = {
@@ -282,7 +291,7 @@ async function main() {
   const outDir = "./out";
   const outPath = path.join(
     outDir,
-    `tenpa-map-${dayjs().format("YYYYMMDD")}.png`
+    `tenpa-map-${now().format("YYYYMMDD")}.png`
   );
   const bytes = await savePngBinary(outPath, canvas);
   console.log(`saved: ${outPath} (${bytes} bytes)`);
