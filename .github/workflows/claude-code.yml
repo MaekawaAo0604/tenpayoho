@@ -1,4 +1,4 @@
-name: Claude Code Action
+name: Claude Code Action (OAuth)
 
 on:
   issue_comment:
@@ -21,8 +21,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # OAuth認証情報をSecretsに保存（初回のみ実行）
+      - name: Setup Claude OAuth
+        if: ${{ !secrets.CLAUDE_OAUTH_ACCESS_TOKEN }}
+        uses: grll/claude-code-login@v1
+        with:
+          github_token: ${{ secrets.CLAUDE_OAUTH_SETUP_PAT }}
+          access_token: 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
+          refresh_token: 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
+          expires_at: "1792472972066"
+
+      # Claude Code Action (OAuth対応版)
       - uses: anthropics/claude-code-action@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          # OAuth tokenを優先、なければAPIキーを使用
-          anthropic_api_key: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN || secrets.ANTHROPIC_API_KEY }}
+        env:
+          CLAUDE_OAUTH_ACCESS_TOKEN: ${{ secrets.CLAUDE_OAUTH_ACCESS_TOKEN }}
+          CLAUDE_OAUTH_REFRESH_TOKEN: ${{ secrets.CLAUDE_OAUTH_REFRESH_TOKEN }}
+          CLAUDE_OAUTH_EXPIRES_AT: ${{ secrets.CLAUDE_OAUTH_EXPIRES_AT }}
