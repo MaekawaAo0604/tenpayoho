@@ -1,0 +1,23 @@
+name: Claude Code Action
+
+on:
+  issue_comment:
+    types: [created]
+  issues:
+    types: [opened]
+
+permissions:
+  issues: write
+  contents: write
+  pull-requests: write
+
+jobs:
+  claude:
+    # tweet-generationラベルがついたIssueのみ実行
+    if: contains(github.event.issue.labels.*.name, 'tweet-generation')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: anthropics/claude-code-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}

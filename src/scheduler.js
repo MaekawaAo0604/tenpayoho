@@ -7,6 +7,8 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc.js";
 import timezone from "dayjs/plugin/timezone.js";
 import { postToTwitterAPI } from "./twitter-api-post.js";
+import { generateTweetText } from "./generate-tweet.js";
+import { fetchTweetFromIssue } from "./fetch-tweet-from-issue.js";
 
 dotenv.config();
 
@@ -53,6 +55,28 @@ async function generateAndPost() {
     // 画像生成
     const imagePath = await generateTenpaMap();
 
+    // 都市データを取得（index.jsのglobal経由）
+    const cityData = global.lastCityData || [];
+    const date = now().format("M/D(ddd)");
+
+    let tweetText;
+
+    // 方法1: GitHub IssueからClaudeの応答を取得（優先）
+    if (process.env.GITHUB_OWNER && process.env.GITHUB_REPO && process.env.GITHUB_TOKEN) {
+      console.log(`[${now().format()}] GitHub Issueから投稿文を取得中...`);
+      tweetText = await fetchTweetFromIssue(
+        process.env.GITHUB_OWNER,
+        process.env.GITHUB_REPO,
+        process.env.GITHUB_TOKEN
+      );
+    }
+
+    // 方法2: Claude APIで投稿文を生成（フォールバック）
+    if (!tweetText) {
+      console.log(`[${now().format()}] Claude APIで投稿文を生成中...`);
+      tweetText = await generateTweetText(cityData, date);
+    }
+
     // Twitter API認証情報
     const credentials = {
       apiKey: process.env.TWITTER_API_KEY,
@@ -60,17 +84,6 @@ async function generateAndPost() {
       accessToken: process.env.TWITTER_ACCESS_TOKEN,
       accessSecret: process.env.TWITTER_ACCESS_SECRET,
     };
-
-    // 投稿テキスト
-    const tweetText = `おはようございます☀️
-【${now().format("M/D(ddd)")}の天パ予報】
-
-全国主要6都市の天パ指数マップをチェック!
-札幌・仙台・東京・名古屋・大阪・福岡🗾
-
-外出前に確認してね👀
-
-#天パ予報 #日本天パ協会 #くせ毛 #天気予報 #ヘアケア`;
 
     // Twitter投稿
     console.log(`[${now().format()}] Twitter投稿開始...`);

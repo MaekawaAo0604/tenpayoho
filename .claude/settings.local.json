@@ -6,7 +6,12 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(git pull:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(curl -s \"https://zenn.dev/acntechjp/articles/3f361da473eac8\")",
+      "Bash(if not exist .env copy .env.example .env)",
+      "Bash(powershell -Command \"if (!(Test-Path .env)) { Copy-Item .env.example .env }\")",
+      "Bash(node test-generate-tweet.js)",
+      "Bash(del test-generate-tweet.js)"
     ],
     "deny": [],
     "ask": []

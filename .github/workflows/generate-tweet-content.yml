@@ -1,0 +1,75 @@
+name: Generate Tweet Content with Claude
+
+on:
+  schedule:
+    # 毎日午前7時(JST)に実行 (UTC 22:00 = JST 07:00)
+    - cron: '0 22 * * *'
+  workflow_dispatch: # 手動実行も可能
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  create-issue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get current date (JST)
+        id: date
+        run: |
+          echo "today=$(TZ=Asia/Tokyo date +'%Y年%m月%d日 (%a)')" >> $GITHUB_OUTPUT
+          echo "date_short=$(TZ=Asia/Tokyo date +'%-m/%-d(%a)')" >> $GITHUB_OUTPUT
+
+      - name: Create issue with tweet request
+        uses: actions/github-script@v7
+        id: create-issue
+        with:
+          script: |
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `📝 天パ予報ツイート生成依頼 - ${{ steps.date.outputs.today }}`,
+              body: `@claude
+
+こんにちは！今日の天パ予報のツイート文を生成してください。
+
+## 📋 依頼内容
+
+以下の要件に従って、天パ予報bot用のツイート文を作成してください:
+
+### ✅ 要件
+- **文字数**: 140文字以内
+- **トーン**: 明るく親しみやすい、天パに悩む人に寄り添う温かいメッセージ
+- **日付**: ${{ steps.date.outputs.date_short }}
+- **内容**:
+  - 挨拶と日付を含める
+  - 全国の天パ指数をチェックするよう促す
+  - 都市名や具体的な数値は不要（画像で表示されるため）
+  - 必須ハッシュタグ: #天パ予報 #日本天パ協会 #くせ毛
+  - 絵文字を適度に使用（使いすぎない）
+
+### 📝 出力形式
+\`\`\`
+ツイート文をここに記載
+\`\`\`
+
+---
+**注意**: コードブロック内にツイート文のみを記載してください。説明や前置きは不要です。
+
+生成が完了したら、このIssueにコメントで回答してください。`,
+              labels: ['tweet-generation', 'automated']
+            });
+
+            console.log(\`Created issue #\${issue.data.number}\`);
+            return issue.data.number;
+
+      - name: Wait for Claude response
+        run: |
+          echo "✅ Issue created successfully!"
+          echo "Issue URL: ${{ github.server_url }}/${{ github.repository }}/issues/${{ steps.create-issue.outputs.result }}"
+          echo ""
+          echo "🤖 Claude will respond to the issue shortly."
+          echo "📌 Check the issue to get the generated tweet content."

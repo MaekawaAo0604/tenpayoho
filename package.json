@@ -13,6 +13,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
+    "@octokit/rest": "^21.0.2",
     "canvas": "^3.2.0",
     "dayjs": "^1.11.18",
     "dotenv": "^17.2.3",

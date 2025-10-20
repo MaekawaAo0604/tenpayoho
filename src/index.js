@@ -238,6 +238,9 @@ async function main() {
   // 都市データ
   const rows = await Promise.all(CITIES.map(fetchCity));
 
+  // 都市データをエクスポート（ツイート生成用）
+  global.lastCityData = rows;
+
   // スケール
   const ICON = Math.max(70, Math.round(W * 0.075));
   const PADY = Math.round(ICON * 0.06);
