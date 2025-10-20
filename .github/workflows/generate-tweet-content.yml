@@ -28,10 +28,13 @@ jobs:
         id: create-issue
         with:
           script: |
+            const today = '${{ steps.date.outputs.today }}';
+            const dateShort = '${{ steps.date.outputs.date_short }}';
+
             const issue = await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `📝 天パ予報ツイート生成依頼 - ${{ steps.date.outputs.today }}`,
+              title: `📝 天パ予報ツイート生成依頼 - ${today}`,
               body: `@claude
 
 こんにちは！今日の天パ予報のツイート文を生成してください。
@@ -43,7 +46,7 @@ jobs:
 ### ✅ 要件
 - **文字数**: 140文字以内
 - **トーン**: 明るく親しみやすい、天パに悩む人に寄り添う温かいメッセージ
-- **日付**: ${{ steps.date.outputs.date_short }}
+- **日付**: ${dateShort}
 - **内容**:
   - 挨拶と日付を含める
   - 全国の天パ指数をチェックするよう促す
