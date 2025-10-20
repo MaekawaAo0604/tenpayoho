@@ -25,7 +25,22 @@ git remote add origin https://github.com/YOUR_USERNAME/tenpa-map.git
 git push -u origin main
 ```
 
-### 2. Anthropic APIキーの取得
+### 2. Claude Code OAuth トークンの取得（ClaudeMax使用）
+
+**ClaudeMaxサブスクリプションを使用する場合（従量課金なし）:**
+
+1. ターミナルで以下のコマンドを実行:
+   ```bash
+   claude setup-token
+   ```
+
+2. ブラウザが開くので、表示されたコードをコピー
+
+3. ターミナルに戻り、コードを貼り付けてEnter
+
+4. `sk-`で始まるトークンが生成されます
+
+**または、従量課金APIキーを使用する場合:**
 
 1. [Anthropic Console](https://console.anthropic.com/) にアクセス
 2. API Keys → Create Key
@@ -34,6 +49,14 @@ git push -u origin main
 ### 3. GitHub Secretsの設定
 
 リポジトリの Settings → Secrets and variables → Actions で以下を追加:
+
+**ClaudeMaxを使用する場合:**
+
+| Secret名 | 値 | 説明 |
+|---------|-----|------|
+| `CLAUDE_CODE_OAUTH_TOKEN` | `sk-...` | `claude setup-token`で生成したトークン |
+
+**従量課金APIを使用する場合:**
 
 | Secret名 | 値 | 説明 |
 |---------|-----|------|
@@ -127,8 +150,9 @@ GitHub Issueから取得できない場合、以下の順で代替処理:
 
 ### Claudeが応答しない
 
-- `ANTHROPIC_API_KEY`がSecretsに正しく設定されているか確認
+- `CLAUDE_CODE_OAUTH_TOKEN`（または`ANTHROPIC_API_KEY`）がSecretsに正しく設定されているか確認
 - Issue に `tweet-generation` ラベルが付いているか確認
+- ワークフローファイルで正しいシークレット名を参照しているか確認
 
 ### Issueから取得できない
 
