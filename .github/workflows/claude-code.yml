@@ -24,8 +24,5 @@ jobs:
       - uses: anthropics/claude-code-action@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          # OAuth token (sk-ant-oat01-) でも動作する可能性あり
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-        env:
-          # OAuth tokenの場合はANTHROPIC_AUTH_TOKENも試せます
-          ANTHROPIC_AUTH_TOKEN: ${{ secrets.ANTHROPIC_AUTH_TOKEN }}
+          # OAuth tokenを優先、なければAPIキーを使用
+          anthropic_api_key: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN || secrets.ANTHROPIC_API_KEY }}
