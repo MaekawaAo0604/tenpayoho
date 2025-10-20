@@ -31,42 +31,44 @@ jobs:
             const today = '${{ steps.date.outputs.today }}';
             const dateShort = '${{ steps.date.outputs.date_short }}';
 
+            const bodyText = `@claude
+
+            こんにちは！今日の天パ予報のツイート文を生成してください。
+
+            ## 📋 依頼内容
+
+            以下の要件に従って、天パ予報bot用のツイート文を作成してください:
+
+            ### ✅ 要件
+            - **文字数**: 140文字以内
+            - **トーン**: 明るく親しみやすい、天パに悩む人に寄り添う温かいメッセージ
+            - **日付**: ${dateShort}
+            - **内容**:
+              - 挨拶と日付を含める
+              - 全国の天パ指数をチェックするよう促す
+              - 都市名や具体的な数値は不要（画像で表示されるため）
+              - 必須ハッシュタグ: #天パ予報 #日本天パ協会 #くせ毛
+              - 絵文字を適度に使用（使いすぎない）
+
+            ### 📝 出力形式
+            \`\`\`
+            ツイート文をここに記載
+            \`\`\`
+
+            ---
+            **注意**: コードブロック内にツイート文のみを記載してください。説明や前置きは不要です。
+
+            生成が完了したら、このIssueにコメントで回答してください。`;
+
             const issue = await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
               title: `📝 天パ予報ツイート生成依頼 - ${today}`,
-              body: `@claude
-
-こんにちは！今日の天パ予報のツイート文を生成してください。
-
-## 📋 依頼内容
-
-以下の要件に従って、天パ予報bot用のツイート文を作成してください:
-
-### ✅ 要件
-- **文字数**: 140文字以内
-- **トーン**: 明るく親しみやすい、天パに悩む人に寄り添う温かいメッセージ
-- **日付**: ${dateShort}
-- **内容**:
-  - 挨拶と日付を含める
-  - 全国の天パ指数をチェックするよう促す
-  - 都市名や具体的な数値は不要（画像で表示されるため）
-  - 必須ハッシュタグ: #天パ予報 #日本天パ協会 #くせ毛
-  - 絵文字を適度に使用（使いすぎない）
-
-### 📝 出力形式
-\`\`\`
-ツイート文をここに記載
-\`\`\`
-
----
-**注意**: コードブロック内にツイート文のみを記載してください。説明や前置きは不要です。
-
-生成が完了したら、このIssueにコメントで回答してください。`,
+              body: bodyText,
               labels: ['tweet-generation', 'automated']
             });
 
-            console.log(\`Created issue #\${issue.data.number}\`);
+            console.log(`Created issue #${issue.data.number}`);
             return issue.data.number;
 
       - name: Wait for Claude response
