@@ -5,6 +5,12 @@ on:
     types: [created]
   issues:
     types: [opened]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number to respond to'
+        required: true
+        type: number
 
 permissions:
   issues: write
