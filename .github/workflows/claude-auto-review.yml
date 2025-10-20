@@ -1,0 +1,56 @@
+name: Claude Auto PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  auto-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Automatic Code Review
+        uses: anthropics/claude-code-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            このプルリクエストをレビューしてください。
+
+            以下の観点で確認をお願いします：
+
+            ## チェック項目
+            1. **コード品質**
+               - バグや潜在的な問題はないか
+               - コードの可読性と保守性
+               - 命名規則の適切性
+
+            2. **セキュリティ**
+               - セキュリティ上の懸念点
+               - 脆弱性の可能性
+
+            3. **パフォーマンス**
+               - パフォーマンス上の問題
+               - 最適化の余地
+
+            4. **ベストプラクティス**
+               - コーディング規約への準拠
+               - プロジェクトの既存パターンとの整合性
+
+            5. **テスト**
+               - テストの網羅性
+               - エッジケースの考慮
+
+            ## レビュー形式
+            - 良い点と改善点を明確に分けて記載
+            - 具体的なコード例を示す
+            - 重要度（Critical/High/Medium/Low）を付ける
+            - 建設的で親しみやすいトーンで
